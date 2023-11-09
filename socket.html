@@ -1,0 +1,212 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Chat</title>
+</head>
+<body>
+    <h1>Simple Chat</h1>
+
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
+        <div id="chatList"></div>
+
+    </div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    
+  <script>
+      const socket = io()
+let name;
+let textarea = document.querySelector('#textarea')
+let messageArea = document.querySelector('.message__area')
+do {
+    name = prompt('Please enter your name: ')
+} while(!name)
+
+textarea.addEventListener('keyup', (e) => {
+    if(e.key === 'Enter') {
+        sendMessage(e.target.value)
+    }
+})
+
+function sendMessage(message) {
+    let msg = {
+        user: name,
+        message: message.trim()
+    }
+    // Append 
+    appendMessage(msg, 'outgoing')
+    textarea.value = ''
+    scrollToBottom()
+
+    // Send to server 
+    socket.emit('message', msg)
+
+}
+
+function appendMessage(msg, type) {
+    let mainDiv = document.createElement('div')
+    let className = type
+    mainDiv.classList.add(className, 'message')
+
+    let markup = `
+        <h4>${msg.user}</h4>
+        <p>${msg.message}</p>
+    `
+    mainDiv.innerHTML = markup
+    messageArea.appendChild(mainDiv)
+}
+
+// Recieve messages 
+socket.on('message', (msg) => {
+    appendMessage(msg, 'incoming')
+    scrollToBottom()
+})
+
+function scrollToBottom() {
+    messageArea.scrollTop = messageArea.scrollHeight
+}
+  </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Chat</title> -->
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script> -->
+    <!-- <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script> -->
+    <!-- <script src="https://code.jquery.com/jquery-1.11.1.js"></script> -->
+    <!-- <script src="http://localhost:8080/socket.io/socket.io.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> -->
+    <!-- <script src="http://localhost:8080/socket.io/socket.io.js"></script> -->
+
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script> 
+</head>
+<body>
+    <h1>Socket.IO Chat</h1>
+    <div>
+        <label for="recipientId">Recipient ID:</label>
+        <input type="text" id="recipientId" placeholder="Enter recipient ID">
+    </div>
+    <div>
+        <label for="message">Message:</label>
+        <input type="text" id="message" placeholder="Enter your message">
+        <button id="sendButton">Send</button>
+    </div>
+    <div id="chat">
+        <h2>Chat:</h2>
+        <ul id="messages"></ul>
+    </div>
+    <script>
+        const socket = io('http://localhost:8080');
+        const recipientIdInput = document.getElementById('recipientId');
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('sendButton');
+        const messagesList = document.getElementById('messages');
+
+        sendButton.addEventListener('click', () => {
+            const recipientId = recipientIdInput.value;
+            const message = messageInput.value;
+            if (recipientId && message) {
+                socket.emit('message', message, recipientId);
+                messageInput.value = '';
+            }
+        });
+
+        socket.on('message', (message) => {
+            displayMessage(message);
+        });
+
+        function displayMessage(message) {
+            const listItem = document.createElement('li');
+            listItem.textContent = message;
+            messagesList.appendChild(listItem);
+        }
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.io Chat</title>
+</head>
+<body>
+    <h1>Socket.io Chat</h1>
+
+    <div>
+        <label for="username">Your Username:</label>
+        <input type="text" id="username" placeholder="Enter your username">
+    </div>
+
+    <div>
+        <label for="recipient">Recipient User ID:</label>
+        <input type="text" id="recipient" placeholder="Enter recipient User ID">
+    </div>
+
+    <div>
+        <label for="message">Message:</label>
+        <input type="text" id="message" placeholder="Enter your message">
+    </div>
+
+    <button id="connectButton">Connect</button>
+    <button id="sendButton" disabled>Send Message</button>
+
+    <ul id="messages"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const usernameInput = document.getElementById('username');
+        const recipientInput = document.getElementById('recipient');
+        const messageInput = document.getElementById('message');
+        const connectButton = document.getElementById('connectButton');
+        const sendButton = document.getElementById('sendButton');
+        const messagesList = document.getElementById('messages');
+        let socket;
+
+        connectButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            socket = io('http://localhost:8080', {
+                auth: { username }
+            });
+            socket.on('connect', () => {
+                connectButton.disabled = true;
+                sendButton.disabled = false;
+                console.log('Connected to the server');
+            });
+
+            socket.on('private message', (message) => {
+                displayMessage(`User ${message.from}: ${message.content}`);
+            });
+
+            socket.on('disconnect', () => {
+                connectButton.disabled = false;
+                sendButton.disabled = true;
+                console.log('Connection closed');
+            });
+        });
+
+        sendButton.addEventListener('click', () => {
+            const recipient = recipientInput.value;
+            const message = messageInput.value;
+            socket.emit('private message', { to: recipient, content: message });
+            displayMessage(`You: ${message}`);
+        });
+
+        function displayMessage(message) {
+            const listItem = document.createElement('li');
+            listItem.textContent = message;
+            messagesList.appendChild(listItem);
+        }
+    </script>
+</body>
+</html>
+

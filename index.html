@@ -1,0 +1,112 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+</head>
+<body>
+  <input id="message-input" autocomplete="off" /><button id="send">Send</button>
+  <ul id="chat"></ul>
+  <script>
+    const ws = new WebSocket('ws://localhost:8080'); // Connect to your WebSocket server
+
+    ws.addEventListener('message', (event) => {
+        console.log(event);
+      const message = event.data;
+      console.log(message,'---------------');
+      const chat = document.getElementById('chat');
+      chat.innerHTML += `<li>${message}</li>`;
+    });
+
+    document.getElementById('send').addEventListener('click', () => {
+      const messageInput = document.getElementById('message-input');
+      const message = messageInput.value;
+      ws.send(message);
+      messageInput.value = '';
+    });
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Chat</title>
+</head>
+<body>
+    <h1>Simple Chat</h1>
+
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
+        <div id="chatList"></div>
+
+    </div>
+    
+    <script>
+        const serverUrl = 'ws://localhost:8080'; // Replace with your server's URL
+
+        const ws = new WebSocket(serverUrl);
+
+        const messagesElement = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+    const chatListElement = document.getElementById('chatList');
+
+
+        ws.addEventListener('open', () => {
+            console.log('Connected to the server');
+            ws.send(JSON.stringify({ action: 'getChatList' }));
+
+        });
+
+        ws.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            // displayMessage(data.receiverId, data.text);
+            if (data.action === 'chatList') {
+        // Handle chat list data and display it
+                console.log(data.chatList,'------------list');
+                displayChatList(data.chatList);
+    } else {
+        displayMessage(data.senderId, data.text);
+    }
+        });
+
+        ws.addEventListener('close', () => {
+            console.log('Connection closed');
+        });
+
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message) {
+                const data = { senderId:5,receiverId:6, text: message };
+                ws.send(JSON.stringify(data));
+                displayMessage(data.senderId, data.text);
+                messageInput.value = '';
+            }
+        });
+        function displayChatList(chatList) {
+console.log(chatListElement,'-----------chatListElement');
+    // Clear the chat list
+    chatListElement.innerHTML = '';
+
+    chatList.forEach((chat) => {
+        const chatItem = document.createElement('div');
+        chatItem.textContent = chat.lastMessage; // You can use other properties like chat ID, etc.
+        chatItem.addEventListener('click', () => startChat(chat.id));
+        chatListElement.appendChild(chatItem);
+    });
+}
+
+        function displayMessage(sender, text) {
+            const messageElement = document.createElement('p');
+            messageElement.textContent = `${sender}: ${text}`;
+            messagesElement.appendChild(messageElement);
+        }
+        
+    </script>
+</body>
+</html>
+
+
+
