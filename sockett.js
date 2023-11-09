@@ -61,6 +61,16 @@ const db = mysql.createPool({
   password: "GsYb6OApRadSjC3L0mfY",
 });
 
+async function getChatListFromDatabase(to, from) {
+  // Implement your database query to fetch the chat list
+  const [rows] = await db.execute(
+    "SELECT sender_id, recipient_id, message_text FROM chatMessages where sender_id=? AND recipient_id=?",
+    [to, from]
+  );
+  console.log(rows, "--------------");
+  return rows;
+}
+
 async function insertChatMessage(senderId, receiverId, text) {
   try {
     const [rows] = await db.execute(
@@ -132,39 +142,46 @@ io.on("connection", async (socket) => {
   const getList = await getChatList();
   let payload;
   for (let [id, socket] of io.of("/").sockets) {
-    payload = {
-      userId: 1,
-      socketId: id,
-      userName: socket.username,
-    };
-    // users.push({
-    //   userID: id,
-    //   username: socket.username,
-    // });
-  }
-  const isExist = getList.filter((dt) => dt.userName == payload.userName);
-  console.log(isExist,'--------isExist');
-  await insertChatuserSockets(payload);
-  console.log(users, "------------users");
-  socket.emit("users", users);
-
-  console.log(getList, "------------------------getList");
-  if (getList && getList.length > 0) {
-    console.log("-----------------");
-    getList.forEach((element) => {
-      users.push({
-        userID: element.socketId,
-        username: element.userName,
-      });
+    // payload = {
+    //   userId: 1,
+    //   socketId: id,
+    //   userName: socket.username,
+    // };
+    users.push({
+      userID: id,
+      username: socket.username,
     });
-    // users.push(getList);
-  } else {
   }
+  // const isExist = getList.filter((dt) => dt.userName == payload.userName);
+  // console.log(isExist,'--------isExist');
+  // await insertChatuserSockets(payload);
+  // console.log(users, "------------users");
+
+  // console.log(getList, "------------------------getList");
+  // if (getList && getList.length > 0) {
+  //   console.log("-----------------");
+  //   getList.forEach((element) => {
+  //     users.push({
+  //       userID: element.socketId,
+  //       username: element.userName,
+  //     });
+  //   });
+  //   // users.push(getList);
+  // } else {
+  // }
+  socket.emit("users", users);
 
   // notify existing users
   socket.broadcast.emit("user connected", {
     userID: socket.id,
     username: socket.username,
+  });
+
+  socket.on("message list", async ({ to, from }) => {
+    console.log(content, to, "------------");
+    const chatList = await getChatListFromDatabase(to, from);
+    console.log(chatList, "---------");
+    socket.broadcast.emit("message list", { chatList });
   });
 
   // forward the private message to the right recipient
